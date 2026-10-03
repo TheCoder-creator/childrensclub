@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Children's Neighborhood Club</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;800&family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--leaf:#d4a017;--leaf-d:#7a5a0a;--sky:#fdf0c8;--sun:#d4a017;--ink:#2a2110;--paper:#fffaf0;--line:#e6d9b5;--red:#b03a2e}
+*{box-sizing:border-box}
+body{margin:0;font-family:Nunito,system-ui,sans-serif;color:var(--ink);background:var(--paper);line-height:1.55}
+h1,h2,h3{font-family:'Baloo 2',system-ui,sans-serif;line-height:1.1;margin:0 0 .5em}
+header{background:var(--leaf);color:var(--ink);padding:14px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+header strong{font-family:'Baloo 2',sans-serif;font-size:1.3rem}
+button,.btn{font:inherit;font-weight:700;border:0;border-radius:10px;padding:8px 16px;background:var(--sun);color:var(--ink);cursor:pointer}
+button.alt{background:#fff;border:2px solid var(--leaf);color:var(--leaf-d)}
+button.danger{background:var(--red);color:#fff}
+.badge{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:10px;background:var(--red);color:#fff;font-size:.8rem;text-align:center}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+.hero{background:var(--sky);padding:48px 20px;text-align:center}
+.hero h1{font-size:clamp(2.2rem,7vw,4.2rem);font-weight:800;color:var(--leaf-d)}
+.hero p{max-width:34em;margin:0 auto;font-size:1.15rem}
+main{max-width:980px;margin:0 auto;padding:24px 16px 60px}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+.cal-head h2{margin:0;font-size:1.8rem}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.dow{text-align:center;font-weight:700;color:var(--leaf-d);padding:4px 0}
+.day{min-height:78px;background:#fff;border:1px solid var(--line);border-radius:8px;padding:4px;text-align:left;font-weight:400;display:flex;flex-direction:column;gap:2px;overflow:hidden;color:var(--ink)}
+.day.blank{background:transparent;border:0}
+.day.today{border:2px solid var(--leaf)}
+.day.sel{background:#fdf3d6}
+.day .n{font-weight:700;font-size:.9rem}
+.dot{font-size:.7rem;background:var(--leaf);color:var(--ink);border-radius:6px;padding:0 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list{margin-top:18px;display:grid;gap:10px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px}
+.card h3{margin:0 0 2px;font-size:1.2rem}
+.muted{color:#6b5d3a;font-size:.92rem}
+dialog{border:0;border-radius:16px;padding:0;width:min(920px,96vw);max-height:92vh}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+.dlg{padding:20px;overflow:auto;max-height:90vh}
+label{display:block;font-weight:700;margin:10px 0 3px}
+input,textarea,select{width:100%;font:inherit;padding:8px 10px;border:2px solid var(--line);border-radius:8px;background:#fff}
+textarea{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85rem;min-height:260px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.tabs{display:flex;gap:6px;margin:12px 0}
+.tabs button{background:#fff;border:2px solid var(--leaf);color:var(--leaf-d)}
+.tabs button.on{background:var(--leaf);color:var(--ink)}
+.msg{margin-top:10px;font-weight:700}
+.msg.err{color:var(--red)}.msg.ok{color:var(--leaf-d)}
+.hide{display:none!important}
+footer{text-align:center;padding:24px;color:#6b5d3a}
+@media(max-width:600px){.day{min-height:56px}.dot{display:none}.day.has::after{content:"";width:8px;height:8px;border-radius:50%;background:var(--leaf)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <strong>Children's Neighborhood Club</strong>
+  <div class="row" style="margin:0"><button id="updBtn" style="background:var(--ink);color:#fff">Updates<span class="badge hide" id="updBadge">0</span></button><button class="alt" id="adminBtn">Admin login</button></div>
+</header>
+
+<section class="hero">
+  <h1>Small children, big changes.</h1>
+  <p>We're kids and neighbors picking up trash together. Check the calendar, read the latest updates, and join the next cleanup!</p>
+</section>
+
+<main>
+  <div class="cal-head">
+    <button class="alt" id="prev" aria-label="Previous month">&larr;</button>
+    <h2 id="monthTitle"></h2>
+    <button class="alt" id="next" aria-label="Next month">&rarr;</button>
+  </div>
+  <div class="grid" id="calGrid"></div>
+  <div class="list" id="eventList"></div>
+</main>
+<footer>Made by the club's neighbors for the neighborhood.</footer>
+
+<!-- Updates dialog -->
+<dialog id="updDlg"><div class="dlg">
+  <div class="row" style="justify-content:space-between;margin-top:0">
+    <h2 style="margin:0">Updates</h2>
+    <button class="alt" id="closeUpd">Close</button>
+  </div>
+  <div class="list" id="updList"></div>
+</div></dialog>
+
+<!-- Admin dialog -->
+<dialog id="dlg"><div class="dlg">
+  <div class="row" style="justify-content:space-between;margin-top:0">
+    <h2 style="margin:0" id="dlgTitle">Admin login</h2>
+    <button class="alt" id="closeDlg">Close</button>
+  </div>
+
+  <form id="loginForm">
+    <label for="em">Email</label><input id="em" type="email" autocomplete="username" required>
+    <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required>
+    <div class="row"><button type="submit">Log in</button></div>
+  </form>
+
+  <div id="adminPanel" class="hide">
+    <div class="row" style="justify-content:space-between;margin-top:0">
+      <span class="muted" id="who"></span><button class="alt" id="logout">Log out</button>
+    </div>
+    <div class="tabs">
+      <button id="tabEv" class="on">Calendar events</button>
+      <button id="tabTools">Admin tools</button>
+      <button id="tabCode">Edit tools</button>
+    </div>
+
+    <div id="evPane">
+      <form id="evForm">
+        <input type="hidden" id="evId">
+        <label for="evTitle">Title</label><input id="evTitle" required>
+        <label for="evDate">Date</label><input id="evDate" type="date" required>
+        <label for="evTime">Time (optional)</label><input id="evTime" placeholder="e.g. 10:00 AM">
+        <label for="evLoc">Meeting spot (optional)</label><input id="evLoc">
+        <label for="evDesc">Details (optional)</label><textarea id="evDesc" style="min-height:70px;font-family:inherit"></textarea>
+        <div class="row"><button type="submit" id="evSave">Add event</button><button type="button" class="alt" id="evClear">Clear form</button></div>
+      </form>
+      <h3 style="margin-top:20px">All events</h3>
+      <div class="list" id="adminEvents"></div>
+    </div>
+
+    <div id="toolsPane" class="hide">
+      <label for="toolSel">Tool</label><select id="toolSel"></select>
+      <div id="toolBox" class="card" style="margin-top:12px"></div>
+    </div>
+
+    <div id="codePane" class="hide">
+      <p class="muted">Each active block is a tool that admins can run in the Admin tools tab. It is never shown on the public site. Scripts inside run.</p>
+      <label for="codeSel">Block</label><select id="codeSel"></select>
+      <label for="codeName">Name</label><input id="codeName">
+      <label for="codeSort">Sort order (lower shows first)</label><input id="codeSort" type="number" value="0">
+      <label for="codeHtml">HTML</label><textarea id="codeHtml" spellcheck="false"></textarea>
+      <label><input type="checkbox" id="codeActive" checked style="width:auto"> Active (shows in Admin tools)</label>
+      <div class="row">
+        <button id="codeSave">Save block</button>
+        <button class="alt" id="codeNew">New block</button>
+        <button class="danger" id="codeDel">Delete block</button>
+      </div>
+    </div>
+    <div class="msg" id="msg" role="status"></div>
+  </div>
+</div></dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = "https://pswlqhfmgvdtiwnnavzm.supabase.co";
+const SUPABASE_KEY = "sb_publishable_w2vDSTndL6Bt8sWfw2KoAA_MFOok_f6";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const ymd = (y, m, d) => `${y}-${pad(m + 1)}-${pad(d)}`;
+
+let events = [], codes = [], view = new Date(), selected = null, isAdmin = false;
+view.setDate(1);
+
+/* ---------- Public page ---------- */
+async function loadEvents() {
+  const { data, error } = await sb.from("events").select("*").order("event_date").order("event_time");
+  if (error) { $("eventList").innerHTML = `<div class="card">Couldn't load the calendar: ${esc(error.message)}</div>`; return; }
+  events = data || [];
+  renderCal();
+}
+
+function renderCal() {
+  const y = view.getFullYear(), m = view.getMonth();
+  $("monthTitle").textContent = view.toLocaleString(undefined, { month: "long", year: "numeric" });
+  const first = new Date(y, m, 1).getDay(), days = new Date(y, m + 1, 0).getDate();
+  const todayStr = (() => { const t = new Date(); return ymd(t.getFullYear(), t.getMonth(), t.getDate()); })();
+  let h = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].map(d => `<div class="dow">${d}</div>`).join("");
+  for (let i = 0; i < first; i++) h += `<div class="day blank"></div>`;
+  for (let d = 1; d <= days; d++) {
+    const key = ymd(y, m, d), evs = events.filter(e => e.event_date === key);
+    h += `<button class="day ${key === todayStr ? "today" : ""} ${key === selected ? "sel" : ""} ${evs.length ? "has" : ""}" data-d="${key}">
+      <span class="n">${d}</span>${evs.slice(0, 2).map(e => `<span class="dot">${esc(e.title)}</span>`).join("")}</button>`;
+  }
+  $("calGrid").innerHTML = h;
+  document.querySelectorAll(".day[data-d]").forEach(b => b.onclick = () => { selected = selected === b.dataset.d ? null : b.dataset.d; renderCal(); });
+  renderList();
+}
+
+function eventCard(e) {
+  const when = new Date(e.event_date + "T00:00").toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  return `<div class="card"><h3>${esc(e.title)}</h3>
+    <div class="muted">${when}${e.event_time ? " at " + esc(e.event_time) : ""}${e.location ? " · " + esc(e.location) : ""}</div>
+    ${e.description ? `<p style="margin:6px 0 0">${esc(e.description)}</p>` : ""}</div>`;
+}
+
+function renderList() {
+  const y = view.getFullYear(), m = view.getMonth();
+  let list, title;
+  if (selected) { list = events.filter(e => e.event_date === selected); title = "That day"; }
+  else { list = events.filter(e => { const d = new Date(e.event_date + "T00:00"); return d.getFullYear() === y && d.getMonth() === m; }); title = "This month"; }
+  $("eventList").innerHTML = `<h3>${title}</h3>` + (list.length ? list.map(eventCard).join("") : `<div class="card muted">No cleanups scheduled here yet. Check back soon!</div>`);
+}
+
+$("prev").onclick = () => { view.setMonth(view.getMonth() - 1); selected = null; renderCal(); };
+$("next").onclick = () => { view.setMonth(view.getMonth() + 1); selected = null; renderCal(); };
+
+/* admin_codes rows are admin-only tools. Admins run them from the Admin tools tab. */
+window.clubSb = sb;
+async function loadCodes() {
+  const { data, error } = await sb.from("admin_codes").select("*").order("sort").order("id");
+  if (error) { console.warn("admin_codes:", error.message); return []; }
+  return data || [];
+}
+function activate(box, html) {
+  box.innerHTML = html;
+  box.querySelectorAll("script").forEach(old => {
+    const sc = document.createElement("script");
+    [...old.attributes].forEach(at => sc.setAttribute(at.name, at.value));
+    sc.textContent = old.textContent;
+    old.replaceWith(sc);
+  });
+}
+function renderTools() {
+  const keep = $("toolSel").value;
+  const act = codes.filter(c => c.active);
+  $("toolSel").innerHTML = act.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+  if (keep && act.some(c => c.id == keep)) $("toolSel").value = keep;
+  runTool();
+}
+function runTool() {
+  const c = codes.find(x => x.id == $("toolSel").value);
+  if (!c) { $("toolBox").innerHTML = '<span class="muted">No active tools yet. Add one in the Edit tools tab.</span>'; return; }
+  activate($("toolBox"), c.html);
+}
+$("toolSel").onchange = runTool;
+
+/* ---------- Updates (messages from admins) ---------- */
+let messages = [];
+const SEEN_KEY = "club_updates_seen";
+const getSeen = () => { try { return localStorage.getItem(SEEN_KEY) || ""; } catch (e) { return ""; } };
+const setSeen = v => { try { localStorage.setItem(SEEN_KEY, v); } catch (e) {} };
+
+async function loadMessages() {
+  const { data, error } = await sb.from("messages").select("*").order("created_at", { ascending: false });
+  if (error) { messages = []; $("updList").innerHTML = `<div class="card">Couldn't load updates: ${esc(error.message)}</div>`; return; }
+  messages = data || [];
+  const seen = getSeen();
+  const unread = messages.filter(m => m.created_at > seen).length;
+  $("updBadge").textContent = unread;
+  $("updBadge").classList.toggle("hide", !unread);
+}
+function renderMessages() {
+  $("updList").innerHTML = messages.length ? messages.map(m => `<div class="card"><h3>${esc(m.title)}</h3>
+    <div class="muted">${new Date(m.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}</div>
+    <p style="margin:6px 0 0;white-space:pre-wrap">${esc(m.body)}</p></div>`).join("")
+    : `<div class="card muted">No updates yet. Check back soon!</div>`;
+}
+$("updBtn").onclick = async () => {
+  await loadMessages(); renderMessages(); $("updDlg").showModal();
+  if (messages.length) setSeen(messages[0].created_at);
+  $("updBadge").classList.add("hide");
+};
+$("closeUpd").onclick = () => $("updDlg").close();
+
+/* ---------- Admin ---------- */
+const msg = (t, ok) => { $("msg").textContent = t || ""; $("msg").className = "msg " + (ok ? "ok" : "err"); };
+
+$("adminBtn").onclick = () => { $("dlg").showModal(); };
+$("closeDlg").onclick = () => $("dlg").close();
+
+$("loginForm").onsubmit = async e => {
+  e.preventDefault();
+  const { error } = await sb.auth.signInWithPassword({ email: $("em").value, password: $("pw").value });
+  if (error) { alert("Login failed: " + error.message); return; }
+  $("pw").value = "";
+  await checkSession();
+};
+$("logout").onclick = async () => { await sb.auth.signOut(); await checkSession(); };
+
+async function checkSession() {
+  const { data: { session } } = await sb.auth.getSession();
+  isAdmin = false;
+  if (session) {
+    const { data } = await sb.from("admins").select("user_id").eq("user_id", session.user.id).maybeSingle();
+    isAdmin = !!data;
+    if (!isAdmin) { await sb.auth.signOut(); alert("That account is not an admin."); }
+  }
+  if (!isAdmin) { $("toolBox").innerHTML = ""; codes = []; }
+  $("loginForm").classList.toggle("hide", isAdmin);
+  $("adminPanel").classList.toggle("hide", !isAdmin);
+  $("dlgTitle").textContent = isAdmin ? "Admin panel" : "Admin login";
+  $("adminBtn").textContent = isAdmin ? "Admin panel" : "Admin login";
+  if (isAdmin) { $("who").textContent = session.user.email; renderAdminEvents(); refreshCodes(); }
+}
+
+const panes = { Ev: "evPane", Tools: "toolsPane", Code: "codePane" };
+Object.keys(panes).forEach(k => $("tab" + k).onclick = () => {
+  Object.keys(panes).forEach(j => { $(panes[j]).classList.toggle("hide", j !== k); $("tab" + j).classList.toggle("on", j === k); });
+});
+
+/* Events CRUD */
+function clearEv() { $("evForm").reset(); $("evId").value = ""; $("evSave").textContent = "Add event"; }
+$("evClear").onclick = clearEv;
+$("evForm").onsubmit = async e => {
+  e.preventDefault();
+  const row = { title: $("evTitle").value.trim(), event_date: $("evDate").value, event_time: $("evTime").value.trim() || null, location: $("evLoc").value.trim() || null, description: $("evDesc").value.trim() || null };
+  const id = $("evId").value;
+  const { error } = id ? await sb.from("events").update(row).eq("id", id) : await sb.from("events").insert(row);
+  if (error) return msg(error.message);
+  msg(id ? "Event updated." : "Event added.", true);
+  clearEv(); await loadEvents(); renderAdminEvents();
+};
+function renderAdminEvents() {
+  $("adminEvents").innerHTML = events.length ? events.map(e => `<div class="card">${eventCard(e).replace(/^<div class="card">|<\/div>$/g, "")}
+    <div class="row"><button class="alt" data-edit="${e.id}">Edit</button><button class="danger" data-del="${e.id}">Delete</button></div></div>`).join("") : `<div class="card muted">No events yet.</div>`;
+  document.querySelectorAll("[data-edit]").forEach(b => b.onclick = () => {
+    const e = events.find(x => x.id == b.dataset.edit);
+    $("evId").value = e.id; $("evTitle").value = e.title; $("evDate").value = e.event_date;
+    $("evTime").value = e.event_time || ""; $("evLoc").value = e.location || ""; $("evDesc").value = e.description || "";
+    $("evSave").textContent = "Save changes"; $("evTitle").focus();
+  });
+  document.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+    if (!confirm("Delete this event?")) return;
+    const { error } = await sb.from("events").delete().eq("id", b.dataset.del);
+    if (error) return msg(error.message);
+    msg("Event deleted.", true); await loadEvents(); renderAdminEvents();
+  });
+}
+
+/* admin_codes CRUD */
+async function refreshCodes(selectId) {
+  codes = await loadCodes();
+  $("codeSel").innerHTML = codes.map(c => `<option value="${c.id}">${esc(c.name)}${c.active ? "" : " (off)"}</option>`).join("");
+  if (selectId) $("codeSel").value = selectId;
+  fillCode();
+  renderTools();
+}
+function fillCode() {
+  const c = codes.find(x => x.id == $("codeSel").value);
+  $("codeName").value = c?.name || ""; $("codeSort").value = c?.sort ?? 0;
+  $("codeHtml").value = c?.html || ""; $("codeActive").checked = c ? c.active : true;
+}
+$("codeSel").onchange = fillCode;
+$("codeNew").onclick = () => { $("codeSel").value = ""; $("codeName").value = "New block"; $("codeSort").value = codes.length; $("codeHtml").value = ""; $("codeActive").checked = true; };
+$("codeSave").onclick = async () => {
+  const row = { name: $("codeName").value.trim() || "Untitled", sort: +$("codeSort").value || 0, html: $("codeHtml").value, active: $("codeActive").checked, updated_at: new Date().toISOString() };
+  const id = $("codeSel").value;
+  const res = id ? await sb.from("admin_codes").update(row).eq("id", id).select().single() : await sb.from("admin_codes").insert(row).select().single();
+  if (res.error) return msg(res.error.message);
+  msg("Saved.", true);
+  await refreshCodes(res.data.id);
+};
+$("codeDel").onclick = async () => {
+  const id = $("codeSel").value; if (!id || !confirm("Delete this block?")) return;
+  const { error } = await sb.from("admin_codes").delete().eq("id", id);
+  if (error) return msg(error.message);
+  msg("Block deleted.", true); await refreshCodes();
+};
+
+/* ---------- Start ---------- */
+loadMessages();
+loadEvents().then(checkSession);
+</script>
+</body>
+</html>
